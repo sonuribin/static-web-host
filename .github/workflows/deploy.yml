@@ -24,7 +24,7 @@ jobs:
 
       # Sync the website to S3
       - name: Sync website to S3
-        run: aws s3 sync ./site s3://my-staticc-hosting --delete
+        run: aws s3 sync ./site s3://static-webb-hosting --delete
 
       # Invalidate CloudFront cache
       - name: Invalidate CloudFront cache
