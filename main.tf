@@ -1,20 +1,25 @@
 provider "aws" {
-  region = "us-east-1"  
+  region     = "us-east-1"
   access_key = "AKIAZI2LCETGE75CR445"
   secret_key = "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"
 }
-resource "aws_s3_bucket" "static_website" {
-  bucket = "static-webb-hosting"
-  acl    = "private"
 
-  website {
-    index_document = "index.html"
-    error_document = "error.html"
-  }
+# Reference to the existing S3 bucket
+variable "static-webb-hosting" {
+  description = "static-webb-hosting"
+  type        = string
+}
+
+# Use the existing S3 bucket
+resource "aws_s3_bucket_object" "website_assets" {
+  bucket = var.existing_bucket_name  # Use the existing bucket name
+  key    = "index.html"
+  source = "https://static-webb-hosting.s3.amazonaws.com/index.html"  # Update this path to where your index.html is located
+  acl    = "public-read"
 }
 
 resource "aws_s3_bucket_policy" "static_website_policy" {
-  bucket = aws_s3_bucket.static_website.bucket
+  bucket = var.existing_bucket_name  # Use the existing bucket name
 
   policy = jsonencode({
     "Version" : "2012-10-17",
@@ -25,17 +30,10 @@ resource "aws_s3_bucket_policy" "static_website_policy" {
           "AWS": "${aws_cloudfront_origin_access_identity.origin_access_identity.iam_arn}"
         },
         "Action" : "s3:GetObject",
-        "Resource" : "${aws_s3_bucket.static_website.arn}/*"
+        "Resource" : "${var.existing_bucket_name}/*"
       }
     ]
   })
-}
-
-resource "aws_s3_bucket_object" "website_assets" {
-  bucket = aws_s3_bucket.static_website.bucket
-  key    = "index.html"
-  source = "https://static-webb-hosting.s3.amazonaws.com/index.html"  # Update this path to where your index.html is located
-  acl    = "public-read"
 }
 
 resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
@@ -44,8 +42,8 @@ resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
 
 resource "aws_cloudfront_distribution" "cdn" {
   origin {
-    domain_name = aws_s3_bucket.static_website.bucket_regional_domain_name
-    origin_id   = "S3-${aws_s3_bucket.static_website.id}"
+    domain_name = "${var.existing_bucket_name}.s3.amazonaws.com"  # Reference the existing S3 bucket
+    origin_id   = "S3-${var.existing_bucket_name}"
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.origin_access_identity.cloudfront_access_identity_path
@@ -59,7 +57,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "S3-${aws_s3_bucket.static_website.id}"
+    target_origin_id = "S3-${var.existing_bucket_name}"
 
     forwarded_values {
       query_string = false
