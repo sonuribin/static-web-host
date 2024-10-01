@@ -4,7 +4,7 @@ provider "aws" {
   secret_key = "mE+XpvTTa4U8YSxMIIddGdbS+pG1TO+QeI/C7h1u"
 }
 resource "aws_s3_bucket" "static_website" {
-  bucket = "static-webb-hosting"
+  bucket = "static-webbb-hosting"
   acl    = "private"
 
   website {
@@ -34,7 +34,7 @@ resource "aws_s3_bucket_policy" "static_website_policy" {
 resource "aws_s3_bucket_object" "website_assets" {
   bucket = aws_s3_bucket.static_website.bucket
   key    = "index.html"
-  source = "https://static-webb-hosting.s3.amazonaws.com/index.html"  # Update this path to where your index.html is located
+  source = "https://static-webbb-hosting.s3.amazonaws.com/index.html"  # Update this path to where your index.html is located
   acl    = "public-read"
 }
 
